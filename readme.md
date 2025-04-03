@@ -59,7 +59,7 @@ Run below playbook to set up the hammerdb and run a benchmark on postgres
 ansible-playbook -i inventory.ini install_setup_hammer_db.yml
 ```
 
-## Some debugging information related to hammerdb
+## Debugging hammerdb issues
 Refresh hammerdb cache if the test does not reflect your configuration changes.
 ```shell
 #refresh hammerdb cache/configs
@@ -75,7 +75,7 @@ sometimes it is better introspect hammerdb keys used during test run:
 print dict
 ```
 
-## Some helpful commands
+## Some helpful psotgres commands
 
 ```shell
 # connect to the postgres database on the vm
