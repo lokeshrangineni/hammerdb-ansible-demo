@@ -1,0 +1,86 @@
+- name: Setup PostgreSQL on a VM
+  hosts: openshift-vm
+  become: yes
+  vars:
+    postgres_version: 14
+    postgres_user: postgres
+    postgres_password: mypassword
+    postgres_db: mydatabase
+    additional_db: tpcc
+    listen_addresses: '*'  # Allow remote connections
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Install required dependencies
+      dnf:
+        name:
+          - python3-psycopg2              # Mandatory for Tcl interpreter
+        state: present
+      when: ansible_os_family == "RedHat"
+    - name: Install PostgreSQL
+      dnf:
+        name: "postgresql-server"
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "RedHat"
+
+    - name: Initialize PostgreSQL database
+      command: "/usr/bin/postgresql-setup --initdb"
+      args:
+        creates: "/var/lib/pgsql/data/PG_VERSION"
+      when: ansible_os_family == "RedHat"
+
+    - name: Ensure PostgreSQL is running and enabled
+      service:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Create PostgreSQL user
+      become_user: postgres
+      postgresql_user:
+        name: "{{ postgres_user }}"
+        password: "{{ postgres_password }}"
+        encrypted: yes
+
+    - name: Create PostgreSQL databases
+      become_user: postgres
+      postgresql_db:
+        name: "{{ item }}"
+        owner: "{{ postgres_user }}"
+      loop:
+        - "{{ postgres_db }}"
+        - "{{ additional_db }}"
+
+    - name: Replace all host authentication methods with md5 - REVIEW if this is needed for you
+      replace:
+        path: "/var/lib/pgsql/data/pg_hba.conf"
+        regexp: '^host\s+.*$'
+        replace: "host all all 0.0.0.0/0 md5"
+
+    - name: Ensure localhost connections are allowed - REVIEW if this is needed for you
+      blockinfile:
+        path: "/var/lib/pgsql/data/pg_hba.conf"
+        marker: "# Ansible managed block"
+        block: |
+          host    all             all             127.0.0.1/32            md5
+          host    all             all             ::1/128                 md5
+
+    - name: Configure PostgreSQL to listen on all addresses
+      lineinfile:
+        path: "/var/lib/pgsql/data/postgresql.conf"
+        regexp: '^#?listen_addresses'
+        line: "listen_addresses = '{{ listen_addresses }}'"
+
+    - name: Restart PostgreSQL to apply changes
+      service:
+        name: postgresql
+        state: restarted
+
+    - name: Check PostgreSQL connection and list databases
+      become_user: postgres
+      command: 'psql -c "\l"'
+      register: db_list
+
+    - name: Display available databases
+      debug:
+        msg: "{{ db_list.stdout_lines }}"

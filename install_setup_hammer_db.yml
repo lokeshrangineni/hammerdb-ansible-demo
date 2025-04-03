@@ -1,0 +1,81 @@
+- name: Install and Run HammerDB for PostgreSQL
+  hosts: openshift-vm
+  become: yes
+  vars:
+    hammerdb_version: "4.11"  # Updated to the latest version
+    postgres_user: myuser
+    postgres_password: mypassword
+    postgres_db: tpcc
+  tasks:
+    - name: Install required dependencies
+      dnf:
+        name:
+          - tcl              # Mandatory for Tcl interpreter
+          - postgresql-libs   # Mandatory for PostgreSQL connectivity
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Download HammerDB
+      get_url:
+        url: "https://github.com/TPC-Council/HammerDB/releases/download/v{{ hammerdb_version }}/HammerDB-{{ hammerdb_version }}-Linux.tar.gz"
+        dest: "/tmp/HammerDB-{{ hammerdb_version }}.tar.gz"
+
+    - name: Extract HammerDB
+      unarchive:
+        src: "/tmp/HammerDB-{{ hammerdb_version }}.tar.gz"
+        dest: "/opt/"
+        remote_src: yes
+
+    - name: Ensure HammerDB scripts are executable
+      file:
+        path: "/opt/HammerDB-{{ hammerdb_version }}/hammerdbcli"
+        mode: '0755'
+
+    - name: Create HammerDB test script for PostgreSQL
+      copy:
+        dest: "/opt/HammerDB-{{ hammerdb_version }}/pg_benchmark.tcl"
+        content: |
+          dbset db pg
+          diset connection pg_host localhost
+          diset connection pg_port 5432
+          diset connection pg_user postgres
+          diset connection pg_pass mypassword
+          diset connection pg_db tpcc
+          diset connection pg_sslmode disable
+          
+          # Enable time profiling
+          diset tpcc pg_timeprofile true
+          
+          vuset logtotemp true
+          vuset showoutput true
+          vuset vu 1  ;# Example: setting 2 virtual users
+          
+          diset tpcc pg_user postgres
+          diset tpcc pg_pass mypassword
+          diset tpcc pg_db tpcc
+          diset tpcc pg_superuser postgres
+          diset tpcc pg_superuserpass mypassword
+          diset tpcc pg_timeprofile true
+          
+          diset tpcc pg_count_ware 1
+          diset tpcc pg_vacuum true
+          diset tpcc pg_timeprofile true
+          
+          diset tpcc pg_rampup 1     ;# Set ramp-up time to 1 minutes
+          diset tpcc pg_duration 1  ;# Set test duration to 1 minutes
+          
+          
+          buildschema
+          vurun
+          puts "Benchmark completed."
+
+    - name: Run HammerDB benchmark as postgres user. it is going to take long time depends on test config.
+      command: "./hammerdbcli auto ./pg_benchmark.tcl"
+      args:
+        chdir: "/opt/HammerDB-{{ hammerdb_version }}"  # Key fix: Sets working directory
+      register: hammerdb_output
+
+    - name: Display HammerDB benchmark output
+      debug:
+        msg: "{{ hammerdb_output}}"
+

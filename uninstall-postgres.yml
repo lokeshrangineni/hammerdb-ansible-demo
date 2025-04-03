@@ -1,0 +1,28 @@
+- name: Uninstall PostgreSQL and Rollback Changes
+  hosts: all
+  become: yes
+  tasks:
+    - name: Stop PostgreSQL service
+      service:
+        name: postgresql
+        state: stopped
+
+    - name: Remove PostgreSQL packages
+      dnf:
+        name: "postgresql-server"
+        state: absent
+
+    - name: Remove PostgreSQL data directory
+      file:
+        path: "/var/lib/pgsql/data"
+        state: absent
+
+    - name: Remove PostgreSQL user
+      user:
+        name: postgres
+        state: absent
+
+    - name: Remove PostgreSQL configuration files
+      file:
+        path: "/var/lib/pgsql"
+        state: absent
