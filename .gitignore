@@ -27,3 +27,7 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### intellij igonre ###
+hammerdb-ansible-demo.iml
+.idea

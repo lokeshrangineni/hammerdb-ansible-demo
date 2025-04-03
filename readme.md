@@ -1,4 +1,4 @@
-# Setting up the postgres and running hammerdb benchmark
+# Setting up the postgres and running hammerdb benchmark using ansible
 
 ## Introduction
 In this tutorial we are setting up the psotgres and after that running hammerdb benchmark on the openshift virtual machine. 
