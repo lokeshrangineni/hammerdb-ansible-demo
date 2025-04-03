@@ -75,7 +75,7 @@ Often hammerdb loads the default configurations so it is useful to see the effec
 print dict
 ```
 
-## Some helpful psotgres commands
+## Some helpful postgress commands
 
 ```shell
 # connect to the postgres database on the vm
