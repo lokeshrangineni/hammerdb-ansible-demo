@@ -66,7 +66,7 @@ Refresh hammerdb cache if the test does not reflect your configuration changes.
 rm /tmp/database.db
 ```
 
-sometimes it is better introspect hammerdb keys used during test run:
+Often hammerdb loads the default configurations so it is useful to see the effective configuration using below commands.
 ```shell
 #run in interactive mode
 ./hammerdbcli
