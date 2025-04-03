@@ -7,8 +7,8 @@ In this tutorial we are setting up the psotgres and after that running hammerdb 
 
 ### Set up the openshift VM with repos and ansible
 Once you have the VM from openshift virtualization platform [register](https://console.redhat.com/insights/connector/activation-keys) with redhat to configure the repo.
-[//]: # (adding the rhel repos to install anything.)
 ```shell
+#adding the rhel repos to install any packages.
 sudo subscription-manager register --activationkey=<> --org=<>
 ```
 
