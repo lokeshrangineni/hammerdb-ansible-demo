@@ -31,3 +31,4 @@ bin/
 ### intellij igonre ###
 hammerdb-ansible-demo.iml
 .idea
+./.idea/**
